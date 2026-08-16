@@ -31,7 +31,7 @@ cp src/main/resources/checker.example.properties src/main/resources/checker.prop
 # token=<YOUR_DADATA_TOKEN>
 
 ./mvnw -q -DskipTests package
-java -jar target/checker-corporate-*.jar 9710083390
+java -jar target/checker-corporate-*.[0-9].jar 9710083390
 ```
 
 For a test or proxied API, override the endpoint with `DADATA_ENDPOINT` or the

@@ -2,9 +2,10 @@ package com.krotname.checker.client;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 
+import java.io.IOException;
 import java.util.Optional;
 
 /**
@@ -18,16 +19,30 @@ public final class DadataResponseParser {
 
     /**
      * Safely traverse DaData response structure and extract the company status field.
-     * Returns empty optional when payload shape is unexpected or malformed to avoid
-     * making network errors look like domain failures.
+     * Returns empty optional when the company is not found or the found entry has no status.
+     * A payload that is not a DaData suggestions document at all (not JSON, not an object,
+     * no {@code suggestions} array) is an integration failure and is reported as
+     * {@link IOException} so that it does not look like a "company not found" domain answer.
      */
-    public Optional<String> extractState(String json) {
+    public Optional<String> extractState(String json) throws IOException {
+        JsonArray suggestions;
         try {
-            JsonObject root = JsonParser.parseString(json).getAsJsonObject();
-            JsonArray suggestions = root.getAsJsonArray(FIELD_SUGGESTIONS);
-            if (suggestions == null || suggestions.isEmpty()) {
-                return Optional.empty();
+            JsonElement rootElement = JsonParser.parseString(json);
+            if (!rootElement.isJsonObject()) {
+                throw new IOException("Unexpected DaData response: root is not a JSON object");
             }
+            JsonElement suggestionsElement = rootElement.getAsJsonObject().get(FIELD_SUGGESTIONS);
+            if (suggestionsElement == null || !suggestionsElement.isJsonArray()) {
+                throw new IOException("Unexpected DaData response: 'suggestions' array is missing");
+            }
+            suggestions = suggestionsElement.getAsJsonArray();
+        } catch (JsonParseException e) {
+            throw new IOException("Unexpected DaData response: malformed JSON", e);
+        }
+        if (suggestions.isEmpty()) {
+            return Optional.empty();
+        }
+        try {
 
             JsonElement firstSuggestion = suggestions.get(0);
             if (!firstSuggestion.isJsonObject()) {

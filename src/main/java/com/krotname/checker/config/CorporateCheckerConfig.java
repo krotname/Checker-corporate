@@ -63,12 +63,15 @@ public final class CorporateCheckerConfig {
 
     /**
      * Resolves value from system property, then environment variable.
+     * A system property that is defined (even as an empty string) is authoritative and
+     * disables the environment lookup, so an explicit {@code -DKEY=} override forces the
+     * resource fallback regardless of the developer's shell environment.
      * This keeps local test overrides explicit and deployment overrides isolated.
      */
     private static String resolveConfigValue(String key) {
         String propertyValue = System.getProperty(key);
-        if (!isBlank(propertyValue)) {
-            return propertyValue;
+        if (propertyValue != null) {
+            return isBlank(propertyValue) ? null : propertyValue;
         }
         String envValue = System.getenv(key);
         return isBlank(envValue) ? null : envValue;

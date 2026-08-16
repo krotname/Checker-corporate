@@ -42,17 +42,19 @@ public final class CheckerCorporate {
         if (!innValidator.isValid(inn)) {
             return CheckResult.invalidInput(inn);
         }
+        // Validator accepts surrounding whitespace; normalize once so DaData and the result see the same value.
+        String normalizedInn = inn.trim();
         try {
-            Optional<String> state = dadataClient.fetchCompanyState(inn);
+            Optional<String> state = dadataClient.fetchCompanyState(normalizedInn);
             if (state.isEmpty()) {
-                return CheckResult.notFound(inn);
+                return CheckResult.notFound(normalizedInn);
             }
-            return fromDadataStatus(inn, state.get());
+            return fromDadataStatus(normalizedInn, state.get());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            return CheckResult.serviceUnavailable(inn, "interrupted");
+            return CheckResult.serviceUnavailable(normalizedInn, "interrupted");
         } catch (IOException e) {
-            return CheckResult.serviceUnavailable(inn, e.getMessage() != null ? e.getMessage() : "io error");
+            return CheckResult.serviceUnavailable(normalizedInn, e.getMessage() != null ? e.getMessage() : "io error");
         }
     }
 
