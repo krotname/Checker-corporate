@@ -58,14 +58,14 @@ export DADATA_TOKEN=your_token # macOS/Linux
 
 ```bash
 ./mvnw -q -DskipTests package
-java -jar target/checker-corporate-*.jar 9710083390
+java -jar target/checker-corporate-*.[0-9].jar 9710083390
 ```
 
 #### Веб UI
 
 ```bash
 ./mvnw -q -DskipTests package
-java -jar target/checker-corporate-*.jar --server 8080
+java -jar target/checker-corporate-*.[0-9].jar --server 8080
 ```
 
 Откройте `http://localhost:8080`.

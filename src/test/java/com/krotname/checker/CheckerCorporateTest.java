@@ -45,6 +45,21 @@ class CheckerCorporateTest {
     }
 
     @Test
+    void shouldQueryDadataWithNormalizedInnAndReportIt() throws IOException, InterruptedException {
+        java.util.concurrent.atomic.AtomicReference<String> queried = new java.util.concurrent.atomic.AtomicReference<>();
+        CheckerCorporate checker = new CheckerCorporate(new InnValidator(), inn -> {
+            queried.set(inn);
+            return Optional.of("ACTIVE");
+        });
+
+        CheckResult result = checker.check("  9710083390 ");
+
+        assertEquals("9710083390", queried.get());
+        assertEquals("9710083390", result.inn());
+        assertEquals(CompanyStatus.ACTIVE, result.status());
+    }
+
+    @Test
     void shouldReturnNotFoundWhenApiDoesNotProvideState() {
         CheckerCorporate checker = new CheckerCorporate(
                 new AlwaysValidInnValidator(),

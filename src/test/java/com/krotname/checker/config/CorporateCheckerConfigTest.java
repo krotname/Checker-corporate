@@ -32,7 +32,7 @@ class CorporateCheckerConfigTest {
     @Test
     void shouldFallbackToResourcePropertiesWhenPropertiesEmpty() {
         System.setProperty("DADATA_TOKEN", "");
-        System.clearProperty("DADATA_ENDPOINT");
+        System.setProperty("DADATA_ENDPOINT", "");
 
         try {
             CorporateCheckerConfig config = CorporateCheckerConfig.fromEnvironmentOrResource();
@@ -48,7 +48,7 @@ class CorporateCheckerConfigTest {
     @Test
     void shouldLoadOnlyMissingEndpointFromResource() {
         System.setProperty("DADATA_TOKEN", "runtime-token");
-        System.clearProperty("DADATA_ENDPOINT");
+        System.setProperty("DADATA_ENDPOINT", "");
         try {
             CorporateCheckerConfig config = CorporateCheckerConfig.fromEnvironmentOrResource();
 
@@ -62,7 +62,7 @@ class CorporateCheckerConfigTest {
 
     @Test
     void shouldLoadOnlyMissingTokenFromResource() {
-        System.clearProperty("DADATA_TOKEN");
+        System.setProperty("DADATA_TOKEN", "");
         System.setProperty("DADATA_ENDPOINT", "https://example.com/runtime");
         try {
             CorporateCheckerConfig config = CorporateCheckerConfig.fromEnvironmentOrResource();

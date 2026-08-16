@@ -71,10 +71,10 @@ class HttpDadataClientTest {
     }
 
     @Test
-    void shouldReturnEmptyWhenJsonDoesNotContainStatus() throws Exception {
+    void shouldReportUnexpectedPayloadAsIntegrationError() throws Exception {
         HttpDadataClient client = createClient("/bad");
-        Optional<String> state = client.fetchCompanyState("9710083390");
-        assertTrue(state.isEmpty());
+        IOException error = assertThrows(IOException.class, () -> client.fetchCompanyState("9710083390"));
+        assertTrue(error.getMessage().startsWith("Unexpected DaData response"), error.getMessage());
     }
 
     private HttpDadataClient createClient(String path) throws Exception {

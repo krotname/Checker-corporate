@@ -21,3 +21,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
   CMD ["java", "-cp", "/app/app.jar", "com.krotname.checker.ContainerHealthCheck"]
 
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+CMD ["--server", "8080"]
