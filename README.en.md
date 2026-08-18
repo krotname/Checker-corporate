@@ -27,12 +27,18 @@ Review documents: [architecture](docs/architecture.md), [quality gates](docs/qua
 ### Run
 
 ```bash
-cp src/main/resources/checker.example.properties src/main/resources/checker.properties
-# token=<YOUR_DADATA_TOKEN>
+export DADATA_TOKEN=<YOUR_DADATA_TOKEN>   # set DADATA_TOKEN=... on Windows
 
 ./mvnw -q -DskipTests package
 java -jar target/checker-corporate-*.[0-9].jar 9710083390
 ```
+
+The classpath fallback (`cp src/main/resources/checker.example.properties
+src/main/resources/checker.properties`) is for local experiments only: the file
+lives under `src/main/resources`, so Maven packages it into the JAR and the
+Dockerfile copies that JAR into the image. A real token written there travels
+with every artifact you share. Use `DADATA_TOKEN` or a secrets manager for
+anything that leaves your machine.
 
 For a test or proxied API, override the endpoint with `DADATA_ENDPOINT` or the
 `api.endpoint` key in `checker.properties`.
@@ -69,6 +75,12 @@ docker compose up --build
 ```
 
 Open `http://localhost:8080`.
+
+`/api/check` is unauthenticated and spends the operator's DaData quota on every
+request, so the server binds to loopback unless `CHECKER_BIND_ADDRESS` says
+otherwise. The image sets `0.0.0.0` because inside a container the boundary is
+the published port, and compose publishes it on `127.0.0.1` only. `CHECKER_PORT`
+changes the port for both the server and the Docker `HEALTHCHECK`.
 
 ### Tests by layer
 

@@ -15,10 +15,15 @@ RUN chown app:app /app/app.jar
 
 EXPOSE 8080
 
+# The container boundary is the published port, so the server may listen on the wildcard
+# address here; on a host it stays on loopback unless CHECKER_BIND_ADDRESS says otherwise.
+ENV CHECKER_PORT=8080
+ENV CHECKER_BIND_ADDRESS=0.0.0.0
+
 USER app
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
   CMD ["java", "-cp", "/app/app.jar", "com.krotname.checker.ContainerHealthCheck"]
 
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
-CMD ["--server", "8080"]
+CMD ["--server"]

@@ -18,16 +18,36 @@ import java.time.Duration;
  */
 public final class ContainerHealthCheck {
     static final String DEFAULT_ENDPOINT = "http://127.0.0.1:8080/health";
+    static final int DEFAULT_PORT = 8080;
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(2);
 
     private ContainerHealthCheck() {
     }
 
     public static void main(String[] args) throws IOException {
-        String endpoint = args.length == 0 ? DEFAULT_ENDPOINT : args[0];
+        String endpoint = args.length == 0 ? defaultEndpoint(System.getenv("CHECKER_PORT")) : args[0];
         if (!isHealthy(endpoint, DEFAULT_TIMEOUT)) {
             throw new IOException("Health endpoint is not ready: " + endpoint);
         }
+    }
+
+    /**
+     * The container may run on a port other than 8080, so the health probe follows the
+     * same CHECKER_PORT variable the server reads instead of a hard-coded 8080.
+     */
+    static String defaultEndpoint(String configuredPort) {
+        int port = DEFAULT_PORT;
+        if (configuredPort != null && !configuredPort.isBlank()) {
+            try {
+                int parsed = Integer.parseInt(configuredPort.trim());
+                if (parsed >= 1 && parsed <= 65_535) {
+                    port = parsed;
+                }
+            } catch (NumberFormatException e) {
+                port = DEFAULT_PORT;
+            }
+        }
+        return "http://127.0.0.1:" + port + "/health";
     }
 
     static boolean isHealthy(String endpoint, Duration timeout) {

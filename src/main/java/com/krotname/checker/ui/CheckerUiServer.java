@@ -12,6 +12,7 @@ import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -25,13 +26,28 @@ public final class CheckerUiServer {
     private static final String INDEX_RESOURCE = "static/index.html";
     private static final String FAVICON_RESOURCE = "static/favicon.svg";
     private final CheckerCorporate checker;
+    private final InetAddress bindAddress;
     private final int requestedPort;
     private final Gson gson;
     private HttpServer server;
     private ExecutorService executor;
 
+    /**
+     * Binds to the loopback interface only. This is the safe default: /api/check is
+     * unauthenticated and every accepted request spends the operator's DaData quota,
+     * so the endpoint must not be reachable from the network unless explicitly asked for.
+     */
     public CheckerUiServer(CheckerCorporate checker, int requestedPort) {
+        this(checker, InetAddress.getLoopbackAddress(), requestedPort);
+    }
+
+    /**
+     * Binds to an explicit address. Wildcard binding is meant for container runtimes,
+     * where the isolation boundary is the published port rather than the listen address.
+     */
+    public CheckerUiServer(CheckerCorporate checker, InetAddress bindAddress, int requestedPort) {
         this.checker = Objects.requireNonNull(checker, "checker");
+        this.bindAddress = Objects.requireNonNull(bindAddress, "bindAddress");
         if (requestedPort < 0 || requestedPort > 65_535) {
             throw new IllegalArgumentException("requestedPort must be between 0 and 65535");
         }
@@ -43,7 +59,7 @@ public final class CheckerUiServer {
         if (server != null) {
             return getPort();
         }
-        HttpServer createdServer = HttpServer.create(new InetSocketAddress(requestedPort), 0);
+        HttpServer createdServer = HttpServer.create(new InetSocketAddress(bindAddress, requestedPort), 0);
         ExecutorService createdExecutor = Executors.newVirtualThreadPerTaskExecutor();
         try {
             createdServer.createContext("/", this::handleIndex);
@@ -64,8 +80,12 @@ public final class CheckerUiServer {
     }
 
     public synchronized int getPort() {
+        return getAddress().getPort();
+    }
+
+    public synchronized InetSocketAddress getAddress() {
         HttpServer currentServer = Objects.requireNonNull(server, "server");
-        return currentServer.getAddress().getPort();
+        return currentServer.getAddress();
     }
 
     public synchronized void stop() {
