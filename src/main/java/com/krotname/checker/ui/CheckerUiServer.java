@@ -12,21 +12,26 @@ import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 public final class CheckerUiServer {
     private static final String INDEX_RESOURCE = "static/index.html";
     private static final String FAVICON_RESOURCE = "static/favicon.svg";
+    private static final InetAddress LOOPBACK_ADDRESS = InetAddress.getLoopbackAddress();
+    private static final int MAX_CONCURRENT_REQUESTS = 16;
     private final CheckerCorporate checker;
     private final int requestedPort;
     private final Gson gson;
     private HttpServer server;
+    private ExecutorService executor;
 
     public CheckerUiServer(CheckerCorporate checker, int requestedPort) {
         this.checker = checker;
@@ -38,25 +43,35 @@ public final class CheckerUiServer {
         if (server != null) {
             return getPort();
         }
-        server = HttpServer.create(new InetSocketAddress(requestedPort), 0);
+        server = HttpServer.create(new InetSocketAddress(LOOPBACK_ADDRESS, requestedPort), 0);
         server.createContext("/", this::handleIndex);
         server.createContext("/api/check", this::handleCheck);
         server.createContext("/health", this::handleHealth);
         server.createContext("/favicon.svg", this::handleFavicon);
         server.createContext("/favicon.ico", this::handleLegacyFavicon);
-        server.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
+        executor = Executors.newFixedThreadPool(MAX_CONCURRENT_REQUESTS);
+        server.setExecutor(executor);
         server.start();
         return getPort();
     }
 
     public int getPort() {
+        return getAddress().getPort();
+    }
+
+    InetSocketAddress getAddress() {
         HttpServer currentServer = Objects.requireNonNull(server, "server");
-        return currentServer.getAddress().getPort();
+        return currentServer.getAddress();
     }
 
     public void stop() {
         if (server != null) {
             server.stop(0);
+            server = null;
+        }
+        if (executor != null) {
+            executor.shutdownNow();
+            executor = null;
         }
     }
 

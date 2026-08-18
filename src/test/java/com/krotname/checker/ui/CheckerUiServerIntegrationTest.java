@@ -41,6 +41,11 @@ class CheckerUiServerIntegrationTest {
     }
 
     @Test
+    void shouldBindOnlyToLoopbackAddress() {
+        assertTrue(server.getAddress().getAddress().isLoopbackAddress());
+    }
+
+    @Test
     void shouldServeHealthCheck() throws Exception {
         HttpRequest request = HttpRequest.newBuilder(uri("/health")).GET().build();
         HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
