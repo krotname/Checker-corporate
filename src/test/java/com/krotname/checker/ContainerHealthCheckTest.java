@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -24,6 +25,15 @@ class ContainerHealthCheckTest {
         if (server != null) {
             server.stop(0);
         }
+    }
+
+    @Test
+    void shouldBuildDefaultEndpointFromConfiguredPort() {
+        assertEquals("http://127.0.0.1:8080/health", ContainerHealthCheck.defaultEndpoint(null));
+        assertEquals("http://127.0.0.1:8080/health", ContainerHealthCheck.defaultEndpoint("  "));
+        assertEquals("http://127.0.0.1:9090/health", ContainerHealthCheck.defaultEndpoint(" 9090 "));
+        assertEquals("http://127.0.0.1:8080/health", ContainerHealthCheck.defaultEndpoint("not-a-port"));
+        assertEquals("http://127.0.0.1:8080/health", ContainerHealthCheck.defaultEndpoint("70000"));
     }
 
     @Test

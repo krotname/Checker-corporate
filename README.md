@@ -35,19 +35,25 @@
 ### Запуск
 
 1. Установить Java 21.
-2. Подготовить токен:
+2. Подготовить токен (предпочтительно переменной окружения):
+
+```bash
+set DADATA_TOKEN=your_token   # Windows
+export DADATA_TOKEN=your_token # macOS/Linux
+```
+
+или, **только для локальных экспериментов**:
 
 ```bash
 cp src/main/resources/checker.example.properties src/main/resources/checker.properties
 # token=<Ваш токен DADATA>
 ```
 
-или:
-
-```bash
-set DADATA_TOKEN=your_token   # Windows
-export DADATA_TOKEN=your_token # macOS/Linux
-```
+`checker.properties` лежит в `src/main/resources`, поэтому Maven кладёт его внутрь
+собранного JAR, а Dockerfile — внутрь образа. Реальный токен, записанный туда,
+уезжает вместе с любым переданным артефактом, и достать его сможет каждый, кто
+получил JAR или образ. Для сборок, которыми делятся, используйте `DADATA_TOKEN`
+или менеджер секретов.
 
 Для тестового или проксируемого API endpoint можно переопределить через `DADATA_ENDPOINT`
 либо ключ `api.endpoint` в `checker.properties`.
@@ -69,6 +75,12 @@ java -jar target/checker-corporate-*.[0-9].jar --server 8080
 ```
 
 Откройте `http://localhost:8080`.
+
+`/api/check` не требует аутентификации и на каждый запрос тратит квоту DaData
+владельца токена, поэтому сервер по умолчанию слушает только loopback. Порт без
+аргумента берётся из `CHECKER_PORT`, адрес привязки — из `CHECKER_BIND_ADDRESS`;
+менять адрес на `0.0.0.0` имеет смысл только внутри контейнера, где границей
+служит опубликованный порт.
 
 ### API
 
@@ -95,6 +107,11 @@ docker compose up --build
 ```
 
 Откройте `http://localhost:8080`.
+
+В контейнере `CHECKER_BIND_ADDRESS=0.0.0.0` (иначе публикация порта не работала бы),
+а compose публикует порт только на `127.0.0.1`. Чтобы отдать UI в сеть, снимите это
+ограничение осознанно и закройте `/api/check` доступом на уровне сети или обратного
+прокси. Порт меняется переменной `CHECKER_PORT` — её же читает `HEALTHCHECK`.
 
 ### UI surface
 

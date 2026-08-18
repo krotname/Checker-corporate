@@ -1,8 +1,12 @@
 services:
   checker-corporate:
     build: .
-    command: ["--server", "8080"]
+    command: ["--server"]
     environment:
       DADATA_TOKEN: ${DADATA_TOKEN:?Set DADATA_TOKEN}
+      CHECKER_PORT: "8080"
+      # Inside the container the isolation boundary is the published port, not the listen address.
+      CHECKER_BIND_ADDRESS: "0.0.0.0"
     ports:
-      - "8080:8080"
+      # /api/check is unauthenticated and spends the DaData quota, so publish it to localhost only.
+      - "127.0.0.1:8080:8080"

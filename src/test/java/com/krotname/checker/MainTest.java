@@ -5,7 +5,11 @@ import org.junit.jupiter.api.Tag;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Tag("unit")
@@ -23,6 +27,24 @@ class MainTest {
         } finally {
             System.setOut(originalOut);
         }
+    }
+
+    @Test
+    void shouldDefaultBindAddressToLoopback() throws UnknownHostException {
+        assertTrue(Main.resolveBindAddress(null).isLoopbackAddress());
+        assertTrue(Main.resolveBindAddress("   ").isLoopbackAddress());
+    }
+
+    @Test
+    void shouldHonourConfiguredBindAddress() throws UnknownHostException {
+        InetAddress wildcard = Main.resolveBindAddress(" 0.0.0.0 ");
+        assertTrue(wildcard.isAnyLocalAddress());
+        assertEquals("127.0.0.1", Main.resolveBindAddress("127.0.0.1").getHostAddress());
+    }
+
+    @Test
+    void shouldRejectUnresolvableBindAddress() {
+        assertThrows(UnknownHostException.class, () -> Main.resolveBindAddress("no.such.host.invalid"));
     }
 
     @Test

@@ -48,6 +48,35 @@ class CheckerUiServerIntegrationTest {
     }
 
     @Test
+    void shouldBindLoopbackByDefault() {
+        assertTrue(server.getAddress().getAddress().isLoopbackAddress());
+    }
+
+    @Test
+    void shouldHonourExplicitBindAddress() throws IOException {
+        CheckerUiServer wildcardServer = new CheckerUiServer(
+                new CheckerCorporate(new AlwaysValidInnValidator(), stubClient("ACTIVE")),
+                InetAddress.getByName("0.0.0.0"),
+                0
+        );
+        try {
+            wildcardServer.start();
+            assertTrue(wildcardServer.getAddress().getAddress().isAnyLocalAddress());
+        } finally {
+            wildcardServer.stop();
+        }
+    }
+
+    @Test
+    void shouldRejectNullBindAddress() {
+        assertThrows(NullPointerException.class, () -> new CheckerUiServer(
+                new CheckerCorporate(new AlwaysValidInnValidator(), stubClient("ACTIVE")),
+                null,
+                0
+        ));
+    }
+
+    @Test
     void shouldServeHealthCheck() throws Exception {
         HttpRequest request = HttpRequest.newBuilder(uri("/health")).GET().build();
         HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
