@@ -46,3 +46,4 @@ jobs:
           name: pitest-report
           path: target/pit-reports
           if-no-files-found: error
+          retention-days: 7
