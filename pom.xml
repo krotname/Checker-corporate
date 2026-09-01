@@ -63,7 +63,7 @@
         <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
         <cyclonedx-maven-plugin.version>2.9.3</cyclonedx-maven-plugin.version>
         <spotbugs-maven-plugin.version>4.10.3.0</spotbugs-maven-plugin.version>
-        <pitest.version>1.25.9</pitest.version>
+        <pitest.version>1.30.0</pitest.version>
         <pitest-junit5-plugin.version>1.2.3</pitest-junit5-plugin.version>
         <test.includeTags></test.includeTags>
         <test.excludeTags></test.excludeTags>
